@@ -1,0 +1,33 @@
+.sidebar button {
+    width: 100%;
+    padding: 12px 15px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #333;
+    font-size: 1rem;
+    border-radius: 4px;
+    margin: 2px 0;
+  }
+  
+.sidebar button:hover {
+    background-color: #e0e0e0;
+}
+  
+.sidebar button.active {
+    background-color: #e0e0e0;
+    font-weight: bold;
+    color: #000;
+}
+
+/* 为不同的视图添加基本样式 */
+.manage-users-view,
+.transaction-management-view,
+.fraud-reporting-view {
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

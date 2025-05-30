@@ -1,24 +1,38 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ChatProvider } from './context/ChatContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import UserManagement from './pages/UserManagement';
+import TransactionManagement from './pages/TransactionManagement';
+import FraudReporting from './pages/FraudReporting';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
+function AppRoutes() {
+  return (
+    <Switch>
+      <Route path="/login" component={Login} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/user-management" component={UserManagement} />
+      <ProtectedRoute path="/transaction-management" component={TransactionManagement} />
+      <ProtectedRoute path="/fraud-reporting" component={FraudReporting} />
+      <Route path="/" exact>
+        <Redirect to="/login" />
+      </Route>
+    </Switch>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AuthProvider>
+      <ChatProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </ChatProvider>
+    </AuthProvider>
   );
 }
 
