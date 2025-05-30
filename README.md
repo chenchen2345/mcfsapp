@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # React Authentication Application
 
 This project is a React-based application that provides user authentication, user management, transaction management, and fraud reporting functionalities. It includes a chat assistant for user interaction.
@@ -88,3 +89,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the MIT License.
+=======
+# mcfsapp
+MCFS-App
+>>>>>>> 5646dc35f2737e7a930189658bd0805d4bd947eb
