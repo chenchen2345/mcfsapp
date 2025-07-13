@@ -1,11 +1,10 @@
 import React from 'react';
+import Transaction from '../components/Transaction/Transaction';
 
 const TransactionManagement = () => {
   return (
     <div>
-      <h1>Transaction Management</h1>
-      <p>Manage your transactions here.</p>
-      {/* Add transaction management functionalities here */}
+      <Transaction />
     </div>
   );
 };

@@ -10,339 +10,508 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background-color: #f5f5f5;
         }
         .container {
-            background: rgba(255,255,255,0.1);
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
             padding: 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
         }
         .form-group {
             margin-bottom: 15px;
         }
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input, select {
+        .form-group input, .form-group select {
             width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
-        button {
-            background: #4CAF50;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        button:hover {
-            background: #45a049;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 5px;
-            white-space: pre-wrap;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .error {
-            background: rgba(255,0,0,0.2);
-        }
-        .success {
-            background: rgba(0,255,0,0.2);
-        }
-        .transaction-card {
-            background: rgba(255,255,255,0.15);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border-left: 4px solid #4CAF50;
-        }
-        .fraud-report {
-            background: rgba(255,193,7,0.2);
-            border-left-color: #FFC107;
-        }
-        .grid {
+        .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
+        .loading {
+            color: #007bff;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Transaction & Fraud Report API Test</h1>
+        <h1>Transaction API Test</h1>
+        <p>This page tests the Transaction API endpoints. Make sure the backend server is running on <code>http://localhost:8080</code>.</p>
         
+        <!-- Login Section -->
+        <div class="test-section">
+            <h3>1. Authentication</h3>
+            <div class="form-row">
         <div class="form-group">
             <label for="username">Username:</label>
             <input type="text" id="username" value="testuser">
         </div>
-        
         <div class="form-group">
             <label for="password">Password:</label>
             <input type="password" id="password" value="password123">
+                </div>
+            </div>
+            <button onclick="login()">Login</button>
+            <div id="loginResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- List Transactions Section -->
+        <div class="test-section">
+            <h3>2. List Transactions</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="page">Page:</label>
+                    <input type="number" id="page" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="size">Size:</label>
+                    <input type="number" id="size" value="10" min="1" max="100">
+                </div>
+            </div>
+            <button onclick="listTransactions()" id="listBtn">List Transactions</button>
+            <div id="listResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Create Transaction Section -->
+        <div class="test-section">
+            <h3>3. Create Transaction</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="type">Type:</label>
+                    <select id="type">
+                        <option value="CASH_IN">Cash In</option>
+                        <option value="CASH_OUT">Cash Out</option>
+                        <option value="TRANSFER" selected>Transfer</option>
+                        <option value="PAYMENT">Payment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" value="1000.00" step="0.01">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nameOrig">Name Orig:</label>
+                    <input type="text" id="nameOrig" value="C1234567890">
+                </div>
+                <div class="form-group">
+                    <label for="oldBalanceOrig">Old Balance Orig:</label>
+                    <input type="number" id="oldBalanceOrig" value="5000.00" step="0.01">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="newBalanceOrig">New Balance Orig:</label>
+                    <input type="number" id="newBalanceOrig" value="4000.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="nameDest">Name Dest:</label>
+                    <input type="text" id="nameDest" value="C0987654321">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="oldBalanceDest">Old Balance Dest:</label>
+                    <input type="number" id="oldBalanceDest" value="2000.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="newBalanceDest">New Balance Dest:</label>
+                    <input type="number" id="newBalanceDest" value="3000.00" step="0.01">
+                </div>
+            </div>
+            <button onclick="createTransaction()" id="createBtn">Create Transaction</button>
+            <div id="createResult" class="result" style="display: none;"></div>
         </div>
         
-        <button onclick="testLogin()">Test Login</button>
-        <button onclick="loadTransactions()">Load Transactions</button>
-        <button onclick="loadFraudReports()">Load Fraud Reports</button>
-        <button onclick="createTransaction()">Create Transaction</button>
-        <button onclick="clearResults()">Clear Results</button>
-        
-        <div id="result" class="result" style="display: none;"></div>
+        <!-- Get Transaction Section -->
+        <div class="test-section">
+            <h3>4. Get Transaction</h3>
+            <div class="form-group">
+                <label for="transactionId">Transaction ID:</label>
+                <input type="number" id="transactionId" placeholder="Enter transaction ID">
+            </div>
+            <button onclick="getTransaction()" id="getBtn">Get Transaction</button>
+            <div id="getResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Update Transaction Section -->
+        <div class="test-section">
+            <h3>5. Update Transaction</h3>
+            <div class="form-group">
+                <label for="updateId">Transaction ID:</label>
+                <input type="number" id="updateId" placeholder="Enter transaction ID to update">
+            </div>
+            <button onclick="updateTransaction()" id="updateBtn">Update Transaction</button>
+            <div id="updateResult" class="result" style="display: none;"></div>
     </div>
 
-    <div class="grid">
-        <div class="container">
-            <h2>Transactions</h2>
-            <div id="transactions"></div>
+        <!-- Delete Transaction Section -->
+        <div class="test-section">
+            <h3>6. Delete Transaction</h3>
+            <div class="form-group">
+                <label for="deleteId">Transaction ID:</label>
+                <input type="number" id="deleteId" placeholder="Enter transaction ID to delete">
+            </div>
+            <button onclick="deleteTransaction()" id="deleteBtn">Delete Transaction</button>
+            <div id="deleteResult" class="result" style="display: none;"></div>
         </div>
         
-        <div class="container">
-            <h2>Fraud Reports</h2>
-            <div id="fraudReports"></div>
+        <!-- Run All Tests Section -->
+        <div class="test-section">
+            <h3>7. Run All Tests</h3>
+            <button onclick="runAllTests()" id="runAllBtn">Run All Tests</button>
+            <div id="runAllResult" class="result" style="display: none;"></div>
         </div>
     </div>
 
     <script>
-        let currentToken = null;
+        const API_URL = 'http://localhost:8080/api';
+        let authToken = null;
 
-        async function testLogin() {
+        // Helper function to make API requests
+        async function makeRequest(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    headers,
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP ${response.status}: ${errorData.message || errorData.details || 'Unknown error'}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Helper function to show result
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+        }
+
+        // Helper function to show loading
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result loading';
+            element.textContent = 'Loading...';
+        }
+
+        // 1. Login function
+        async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+
+            showLoading('loginResult');
             
             try {
-                const response = await fetch('http://localhost:8080/api/auth/login', {
+                const data = await makeRequest(`${API_URL}/auth/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify({ username, password })
                 });
                 
-                const data = await response.json();
-                
-                if (response.ok) {
-                    currentToken = data.token;
-                    showResult('✅ Login successful!\nToken: ' + data.token.substring(0, 50) + '...', 'success');
-                } else {
-                    showResult('❌ Login failed:\n' + JSON.stringify(data, null, 2), 'error');
-                }
+                authToken = data.token;
+                showResult('loginResult', { message: 'Login successful', token: data.token });
             } catch (error) {
-                showResult('❌ Error during login:\n' + error.message, 'error');
+                showResult('loginResult', error.message, true);
             }
         }
 
-        async function loadTransactions() {
-            if (!currentToken) {
-                showResult('❌ Please login first to get a token', 'error');
-                return;
-            }
+        // 2. List transactions function
+        async function listTransactions() {
+            const page = document.getElementById('page').value;
+            const size = document.getElementById('size').value;
+
+            showLoading('listResult');
             
             try {
-                const response = await fetch('http://localhost:8080/api/transactions', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    displayTransactions(data);
-                    showResult('✅ Transactions loaded successfully!\nTotal: ' + data.length, 'success');
-                } else {
-                    showResult('❌ Failed to load transactions:\n' + JSON.stringify(data, null, 2), 'error');
-                }
+                const data = await makeRequest(`${API_URL}/transactions?page=${page}&size=${size}`);
+                showResult('listResult', data);
             } catch (error) {
-                showResult('❌ Error loading transactions:\n' + error.message, 'error');
+                showResult('listResult', error.message, true);
             }
         }
 
-        async function loadFraudReports() {
-            if (!currentToken) {
-                showResult('❌ Please login first to get a token', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch('http://localhost:8080/api/fraud-reports', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    displayFraudReports(data);
-                    showResult('✅ Fraud reports loaded successfully!\nTotal: ' + data.length, 'success');
-                } else {
-                    showResult('❌ Failed to load fraud reports:\n' + JSON.stringify(data, null, 2), 'error');
-                }
-            } catch (error) {
-                showResult('❌ Error loading fraud reports:\n' + error.message, 'error');
-            }
-        }
-
+        // 3. Create transaction function
         async function createTransaction() {
-            if (!currentToken) {
-                showResult('❌ Please login first to get a token', 'error');
+            const transactionData = {
+                type: document.getElementById('type').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                nameOrig: document.getElementById('nameOrig').value,
+                oldBalanceOrig: parseFloat(document.getElementById('oldBalanceOrig').value),
+                newBalanceOrig: parseFloat(document.getElementById('newBalanceOrig').value),
+                nameDest: document.getElementById('nameDest').value,
+                oldBalanceDest: parseFloat(document.getElementById('oldBalanceDest').value),
+                newBalanceDest: parseFloat(document.getElementById('newBalanceDest').value)
+            };
+
+            // Validate data before sending
+            if (!transactionData.type || !transactionData.nameOrig || !transactionData.nameDest) {
+                showResult('createResult', 'Please fill in all required fields', true);
+                return;
+            }
+
+            if (isNaN(transactionData.amount) || transactionData.amount <= 0) {
+                showResult('createResult', 'Please enter a valid amount', true);
+                return;
+            }
+
+            if (isNaN(transactionData.oldBalanceOrig) || isNaN(transactionData.newBalanceOrig) || 
+                isNaN(transactionData.oldBalanceDest) || isNaN(transactionData.newBalanceDest)) {
+                showResult('createResult', 'Please enter valid balance amounts', true);
+                return;
+            }
+
+            showLoading('createResult');
+
+            try {
+                const data = await makeRequest(`${API_URL}/transactions`, {
+                    method: 'POST',
+                    body: JSON.stringify(transactionData)
+                });
+                showResult('createResult', data);
+            } catch (error) {
+                showResult('createResult', error.message, true);
+            }
+        }
+
+        // 4. Get transaction function
+        async function getTransaction() {
+            const id = document.getElementById('transactionId').value;
+
+            if (!id) {
+                showResult('getResult', 'Please enter a transaction ID', true);
+                return;
+            }
+            
+            showLoading('getResult');
+
+            try {
+                const data = await makeRequest(`${API_URL}/transactions/${id}`);
+                showResult('getResult', data);
+            } catch (error) {
+                showResult('getResult', error.message, true);
+            }
+        }
+
+        // 5. Update transaction function
+        async function updateTransaction() {
+            const id = document.getElementById('updateId').value;
+
+            if (!id) {
+                showResult('updateResult', 'Please enter a transaction ID', true);
                 return;
             }
             
             const transactionData = {
-                type: 'TRANSFER',
-                amount: 1000.00,
-                nameOrig: 'John Doe',
-                oldBalanceOrig: 5000.00,
-                newBalanceOrig: 4000.00,
-                nameDest: 'Jane Smith',
-                oldBalanceDest: 2000.00,
-                newBalanceDest: 3000.00
+                type: document.getElementById('type').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                nameOrig: document.getElementById('nameOrig').value,
+                oldBalanceOrig: parseFloat(document.getElementById('oldBalanceOrig').value),
+                newBalanceOrig: parseFloat(document.getElementById('newBalanceOrig').value),
+                nameDest: document.getElementById('nameDest').value,
+                oldBalanceDest: parseFloat(document.getElementById('oldBalanceDest').value),
+                newBalanceDest: parseFloat(document.getElementById('newBalanceDest').value)
             };
+
+            showLoading('updateResult');
             
             try {
-                const response = await fetch('http://localhost:8080/api/transactions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json',
-                    },
+                const data = await makeRequest(`${API_URL}/transactions/${id}`, {
+                    method: 'PUT',
                     body: JSON.stringify(transactionData)
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showResult('✅ Transaction created successfully!\nID: ' + data.id, 'success');
-                    loadTransactions(); // Reload transactions
-                } else {
-                    showResult('❌ Failed to create transaction:\n' + JSON.stringify(data, null, 2), 'error');
-                }
+                showResult('updateResult', data);
             } catch (error) {
-                showResult('❌ Error creating transaction:\n' + error.message, 'error');
+                showResult('updateResult', error.message, true);
             }
         }
 
-        function displayTransactions(transactions) {
-            const container = document.getElementById('transactions');
-            container.innerHTML = '';
+        // 6. Delete transaction function
+        async function deleteTransaction() {
+            const id = document.getElementById('deleteId').value;
             
-            if (transactions.length === 0) {
-                container.innerHTML = '<p>No transactions found</p>';
+            if (!id) {
+                showResult('deleteResult', 'Please enter a transaction ID', true);
                 return;
             }
             
-            transactions.forEach(transaction => {
-                const card = document.createElement('div');
-                card.className = 'transaction-card';
-                if (transaction.isFraud) {
-                    card.classList.add('fraud-report');
-                }
-                
-                card.innerHTML = `
-                    <h3>Transaction #${transaction.id}</h3>
-                    <p><strong>Type:</strong> ${transaction.type}</p>
-                    <p><strong>Amount:</strong> $${transaction.amount.toFixed(2)}</p>
-                    <p><strong>From:</strong> ${transaction.nameOrig}</p>
-                    <p><strong>To:</strong> ${transaction.nameDest}</p>
-                    <p><strong>Created:</strong> ${new Date(transaction.createdAt).toLocaleDateString()}</p>
-                    ${transaction.isFraud ? `<p style="color: #ff4444;"><strong>⚠️ FRAUD DETECTED (${(transaction.fraudProbability * 100).toFixed(1)}%)</strong></p>` : ''}
-                    <button onclick="generateFraudReport(${transaction.id})">Generate Report</button>
-                `;
-                
-                container.appendChild(card);
-            });
-        }
+            if (!confirm(`Are you sure you want to delete transaction ${id}?`)) {
+                return;
+            }
+            
+            showLoading('deleteResult');
 
-        function displayFraudReports(reports) {
-            const container = document.getElementById('fraudReports');
-            container.innerHTML = '';
-            
-            if (reports.length === 0) {
-                container.innerHTML = '<p>No fraud reports found</p>';
-                return;
-            }
-            
-            reports.forEach(report => {
-                const card = document.createElement('div');
-                card.className = 'transaction-card fraud-report';
-                
-                card.innerHTML = `
-                    <h3>Fraud Report #${report.id}</h3>
-                    <p><strong>Transaction ID:</strong> ${report.transaction_id}</p>
-                    <p><strong>Generated:</strong> ${new Date(report.generated_at).toLocaleDateString()}</p>
-                    <p><strong>Report:</strong> ${report.report.substring(0, 100)}...</p>
-                `;
-                
-                container.appendChild(card);
-            });
-        }
-
-        async function generateFraudReport(transactionId) {
-            if (!currentToken) {
-                showResult('❌ Please login first to get a token', 'error');
-                return;
-            }
-            
             try {
-                const response = await fetch(`http://localhost:8080/api/fraud-reports/generate/${transactionId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json',
-                    }
+                await makeRequest(`${API_URL}/transactions/${id}`, {
+                    method: 'DELETE'
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showResult('✅ Fraud report generated successfully!', 'success');
-                    loadFraudReports(); // Reload fraud reports
-                } else {
-                    showResult('❌ Failed to generate fraud report:\n' + JSON.stringify(data, null, 2), 'error');
-                }
+                showResult('deleteResult', 'Transaction deleted successfully');
             } catch (error) {
-                showResult('❌ Error generating fraud report:\n' + error.message, 'error');
+                showResult('deleteResult', error.message, true);
             }
         }
 
-        function showResult(message, type) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.textContent = message;
-            resultDiv.className = 'result ' + type;
-            resultDiv.style.display = 'block';
+        // 7. Run all tests function
+        async function runAllTests() {
+            showLoading('runAllResult');
+            const results = [];
+
+            try {
+                // Test 1: Login
+                results.push('1. Testing login...');
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const loginData = await makeRequest(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                authToken = loginData.token;
+                results.push('✅ Login successful');
+
+                // Test 2: List transactions
+                results.push('\n2. Testing list transactions...');
+                const listData = await makeRequest(`${API_URL}/transactions?page=1&size=5`);
+                results.push(`✅ List transactions successful (${listData.transactions?.length || 0} transactions)`);
+
+                // Test 3: Create transaction
+                results.push('\n3. Testing create transaction...');
+                const createData = await makeRequest(`${API_URL}/transactions`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: 'TRANSFER',
+                        amount: 1000.00,
+                        nameOrig: 'C1234567890',
+                        oldBalanceOrig: 5000.00,
+                        newBalanceOrig: 4000.00,
+                        nameDest: 'C0987654321',
+                        oldBalanceDest: 2000.00,
+                        newBalanceDest: 3000.00
+                    })
+                });
+                results.push(`✅ Create transaction successful (ID: ${createData.id})`);
+
+                // Test 4: Get transaction
+                results.push('\n4. Testing get transaction...');
+                const getData = await makeRequest(`${API_URL}/transactions/${createData.id}`);
+                results.push(`✅ Get transaction successful`);
+
+                // Test 5: Update transaction
+                results.push('\n5. Testing update transaction...');
+                const updateData = await makeRequest(`${API_URL}/transactions/${createData.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        type: 'PAYMENT',
+                        amount: 1500.00,
+                        nameOrig: 'C1234567890',
+                        oldBalanceOrig: 5000.00,
+                        newBalanceOrig: 3500.00,
+                        nameDest: 'C0987654321',
+                        oldBalanceDest: 2000.00,
+                        newBalanceDest: 3500.00
+                    })
+                });
+                results.push(`✅ Update transaction successful`);
+
+                // Test 6: Delete transaction
+                results.push('\n6. Testing delete transaction...');
+                await makeRequest(`${API_URL}/transactions/${createData.id}`, {
+                    method: 'DELETE'
+                });
+                results.push(`✅ Delete transaction successful`);
+
+                results.push('\n🎉 All tests completed successfully!');
+                showResult('runAllResult', results.join('\n'));
+
+            } catch (error) {
+                results.push(`❌ Test failed: ${error.message}`);
+                showResult('runAllResult', results.join('\n'), true);
+        }
         }
 
-        function clearResults() {
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('transactions').innerHTML = '';
-            document.getElementById('fraudReports').innerHTML = '';
-        }
+        // Auto-login on page load
+        window.addEventListener('load', () => {
+            console.log('Transaction API test page loaded. You can run tests manually or use the "Run All Tests" button.');
+        });
     </script>
 </body>
 </html> 

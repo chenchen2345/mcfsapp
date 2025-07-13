@@ -1,115 +1,147 @@
-const axios = require('axios');
-
+// Test script for Transaction API
 const API_URL = 'http://localhost:8080/api';
 
-// 模拟登录获取token
-async function testTransactionAPI() {
-  try {
-    console.log('Testing Transaction and Fraud Report APIs...\n');
+// Test data
+const testTransaction = {
+  type: 'TRANSFER',
+  amount: 1000.00,
+  nameOrig: 'C1234567890',
+  oldBalanceOrig: 5000.00,
+  newBalanceOrig: 4000.00,
+  nameDest: 'C0987654321',
+  oldBalanceDest: 2000.00,
+  newBalanceDest: 3000.00
+};
 
-    // 1. 先登录获取token
-    console.log('1. Testing login to get token...');
-    const loginResponse = await axios.post(`${API_URL}/auth/login`, {
-      username: 'testuser',
-      password: 'password123'
+// Helper function to make API requests
+async function makeRequest(url, options = {}) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
     });
     
-    const token = loginResponse.data.token;
-    console.log('✅ Login successful, token received\n');
-
-    // 设置请求头
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-
-    // 2. 获取交易列表
-    console.log('2. Testing get transactions list...');
-    const transactionsResponse = await axios.get(`${API_URL}/transactions`, { headers });
-    console.log('✅ Transactions retrieved successfully');
-    console.log('Total transactions:', transactionsResponse.data.length);
-    if (transactionsResponse.data.length > 0) {
-      console.log('Sample transaction:', JSON.stringify(transactionsResponse.data[0], null, 2));
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`HTTP ${response.status}: ${errorData.message || errorData.details || 'Unknown error'}`);
     }
-
-    // 3. 获取欺诈报告列表
-    console.log('\n3. Testing get fraud reports list...');
-    const fraudReportsResponse = await axios.get(`${API_URL}/fraud-reports`, { headers });
-    console.log('✅ Fraud reports retrieved successfully');
-    console.log('Total fraud reports:', fraudReportsResponse.data.length);
-    if (fraudReportsResponse.data.length > 0) {
-      console.log('Sample fraud report:', JSON.stringify(fraudReportsResponse.data[0], null, 2));
-    }
-
-    // 4. 创建新交易
-    console.log('\n4. Testing create new transaction...');
-    const newTransaction = {
-      type: 'TRANSFER',
-      amount: 1000.00,
-      nameOrig: 'John Doe',
-      oldBalanceOrig: 5000.00,
-      newBalanceOrig: 4000.00,
-      nameDest: 'Jane Smith',
-      oldBalanceDest: 2000.00,
-      newBalanceDest: 3000.00
-    };
     
-    const createResponse = await axios.post(`${API_URL}/transactions`, newTransaction, { headers });
-    console.log('✅ Transaction created successfully');
-    console.log('Created transaction ID:', createResponse.data.id);
-
-    // 5. 获取刚创建的交易
-    console.log('\n5. Testing get specific transaction...');
-    const transactionId = createResponse.data.id;
-    const getTransactionResponse = await axios.get(`${API_URL}/transactions/${transactionId}`, { headers });
-    console.log('✅ Transaction retrieved successfully');
-    console.log('Transaction details:', JSON.stringify(getTransactionResponse.data, null, 2));
-
-    // 6. 为交易生成欺诈报告
-    console.log('\n6. Testing generate fraud report...');
-    const generateReportResponse = await axios.post(`${API_URL}/fraud-reports/generate/${transactionId}`, {}, { headers });
-    console.log('✅ Fraud report generated successfully');
-    console.log('Generated report:', JSON.stringify(generateReportResponse.data, null, 2));
-
-    // 7. 获取该交易的欺诈报告
-    console.log('\n7. Testing get fraud report by transaction...');
-    const fraudReportResponse = await axios.get(`${API_URL}/fraud-reports/transaction/${transactionId}`, { headers });
-    console.log('✅ Fraud report retrieved successfully');
-    console.log('Fraud report details:', JSON.stringify(fraudReportResponse.data, null, 2));
-
-    // 8. 更新交易
-    console.log('\n8. Testing update transaction...');
-    const updateData = {
-      type: 'PAYMENT',
-      amount: 1500.00,
-      nameOrig: 'John Doe Updated',
-      oldBalanceOrig: 5000.00,
-      newBalanceOrig: 3500.00,
-      nameDest: 'Jane Smith Updated',
-      oldBalanceDest: 2000.00,
-      newBalanceDest: 3500.00
-    };
-    
-    const updateResponse = await axios.put(`${API_URL}/transactions/${transactionId}`, updateData, { headers });
-    console.log('✅ Transaction updated successfully');
-    console.log('Updated transaction:', JSON.stringify(updateResponse.data, null, 2));
-
-    // 9. 删除交易
-    console.log('\n9. Testing delete transaction...');
-    await axios.delete(`${API_URL}/transactions/${transactionId}`, { headers });
-    console.log('✅ Transaction deleted successfully');
-
-    console.log('\n🎉 All API tests completed successfully!');
-
+    return await response.json();
   } catch (error) {
-    console.error('❌ Error:', error.response ? error.response.data : error.message);
-    
-    if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Headers:', error.response.headers);
-    }
+    console.error('Request failed:', error);
+    throw error;
   }
 }
 
-// 运行测试
-testTransactionAPI(); 
+// Test functions
+async function testListTransactions() {
+  console.log('Testing: List Transactions');
+  try {
+    const data = await makeRequest(`${API_URL}/transactions?page=1&size=10`);
+    console.log('✅ List transactions successful:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ List transactions failed:', error.message);
+  }
+}
+
+async function testCreateTransaction() {
+  console.log('Testing: Create Transaction');
+  try {
+    const data = await makeRequest(`${API_URL}/transactions`, {
+      method: 'POST',
+      body: JSON.stringify(testTransaction)
+    });
+    console.log('✅ Create transaction successful:', data);
+    return data.id;
+  } catch (error) {
+    console.error('❌ Create transaction failed:', error.message);
+  }
+}
+
+async function testGetTransaction(id) {
+  console.log(`Testing: Get Transaction ${id}`);
+  try {
+    const data = await makeRequest(`${API_URL}/transactions/${id}`);
+    console.log('✅ Get transaction successful:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Get transaction failed:', error.message);
+  }
+}
+
+async function testUpdateTransaction(id) {
+  console.log(`Testing: Update Transaction ${id}`);
+  const updateData = {
+    ...testTransaction,
+    amount: 1500.00,
+    newBalanceOrig: 3500.00,
+    newBalanceDest: 3500.00
+  };
+  
+  try {
+    const data = await makeRequest(`${API_URL}/transactions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    });
+    console.log('✅ Update transaction successful:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Update transaction failed:', error.message);
+  }
+}
+
+async function testDeleteTransaction(id) {
+  console.log(`Testing: Delete Transaction ${id}`);
+  try {
+    await makeRequest(`${API_URL}/transactions/${id}`, {
+      method: 'DELETE'
+    });
+    console.log('✅ Delete transaction successful');
+    return true;
+  } catch (error) {
+    console.error('❌ Delete transaction failed:', error.message);
+  }
+}
+
+// Main test function
+async function runTests() {
+  console.log('🚀 Starting Transaction API Tests...\n');
+  
+  // Test 1: List transactions
+  await testListTransactions();
+  console.log('');
+  
+  // Test 2: Create transaction
+  const newId = await testCreateTransaction();
+  console.log('');
+  
+  if (newId) {
+    // Test 3: Get specific transaction
+    await testGetTransaction(newId);
+    console.log('');
+    
+    // Test 4: Update transaction
+    await testUpdateTransaction(newId);
+    console.log('');
+    
+    // Test 5: Delete transaction
+    await testDeleteTransaction(newId);
+    console.log('');
+  }
+  
+  console.log('🏁 Transaction API Tests completed!');
+}
+
+// Run tests if this script is executed directly
+if (typeof window === 'undefined') {
+  // Node.js environment
+  runTests().catch(console.error);
+} else {
+  // Browser environment
+  window.runTransactionTests = runTests;
+  console.log('Transaction API tests loaded. Run window.runTransactionTests() to start testing.');
+} 
