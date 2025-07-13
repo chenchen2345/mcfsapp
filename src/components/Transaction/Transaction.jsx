@@ -33,21 +33,43 @@ const Transaction = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [importing, setImporting] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
+  const [importError, setImportError] = useState(null);
+  const [importSuccess, setImportSuccess] = useState(null);
 
   useEffect(() => {
     loadTransactions();
   }, [page, size]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
       const params = { page, size };
+      
+      // 如果是强制刷新，添加时间戳参数避免缓存
+      if (forceRefresh) {
+        params._t = Date.now();
+      }
+      
       const data = await fetchTransactions(params);
+      console.log('Backend response data:', data); // 调试信息
+      
       if (data && data.transactions) {
+        console.log('Transactions with structure:', data.transactions.map(tx => ({
+          id: tx.id,
+          createdAt: tx.createdAt,
+          updatedAt: tx.updatedAt,
+          hasUpdatedAt: 'updatedAt' in tx
+        }))); // 调试信息
         setTransactions(data.transactions);
         setTotal(data.total || 0);
       } else if (Array.isArray(data)) {
+        console.log('Direct array response:', data.map(tx => ({
+          id: tx.id,
+          createdAt: tx.createdAt,
+          updatedAt: tx.updatedAt,
+          hasUpdatedAt: 'updatedAt' in tx
+        }))); // 调试信息
         setTransactions(data);
         setTotal(data.length);
       } else {
@@ -95,13 +117,13 @@ const Transaction = () => {
     if (mode === 'edit' && tx) {
       setFormData({
         type: tx.type || '',
-        amount: tx.amount ? tx.amount.toString() : '',
+        amount: tx.amount !== null && tx.amount !== undefined ? tx.amount.toString() : '',
         nameOrig: tx.nameOrig || '',
-        oldBalanceOrig: tx.oldBalanceOrig ? tx.oldBalanceOrig.toString() : '',
-        newBalanceOrig: tx.newBalanceOrig ? tx.newBalanceOrig.toString() : '',
+        oldBalanceOrig: tx.oldBalanceOrig !== null && tx.oldBalanceOrig !== undefined ? tx.oldBalanceOrig.toString() : '',
+        newBalanceOrig: tx.newBalanceOrig !== null && tx.newBalanceOrig !== undefined ? tx.newBalanceOrig.toString() : '',
         nameDest: tx.nameDest || '',
-        oldBalanceDest: tx.oldBalanceDest ? tx.oldBalanceDest.toString() : '',
-        newBalanceDest: tx.newBalanceDest ? tx.newBalanceDest.toString() : ''
+        oldBalanceDest: tx.oldBalanceDest !== null && tx.oldBalanceDest !== undefined ? tx.oldBalanceDest.toString() : '',
+        newBalanceDest: tx.newBalanceDest !== null && tx.newBalanceDest !== undefined ? tx.newBalanceDest.toString() : ''
       });
       setSelectedId(tx.id);
     } else {
@@ -126,49 +148,52 @@ const Transaction = () => {
   const handleDialogSubmit = async e => {
     e.preventDefault();
     
-    // Validate required fields
-    if (!formData.type || !formData.nameOrig || !formData.nameDest) {
-      alert('Please fill in all required fields (Type, Name Orig, Name Dest)');
-      return;
-    }
-
-    // Validate numeric fields
-    const amount = parseFloat(formData.amount);
-    const oldBalanceOrig = parseFloat(formData.oldBalanceOrig);
-    const newBalanceOrig = parseFloat(formData.newBalanceOrig);
-    const oldBalanceDest = parseFloat(formData.oldBalanceDest);
-    const newBalanceDest = parseFloat(formData.newBalanceDest);
-
-    if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount (must be greater than 0)');
-      return;
-    }
-
-    if (isNaN(oldBalanceOrig) || isNaN(newBalanceOrig) || isNaN(oldBalanceDest) || isNaN(newBalanceDest)) {
-      alert('Please enter valid balance amounts');
-      return;
-    }
-
+    // 转换数值字段为数字类型
+    const processedData = {
+      ...formData,
+      amount: formData.amount === '' ? 0 : parseFloat(formData.amount) || 0,
+      oldBalanceOrig: formData.oldBalanceOrig === '' ? 0 : parseFloat(formData.oldBalanceOrig) || 0,
+      newBalanceOrig: formData.newBalanceOrig === '' ? 0 : parseFloat(formData.newBalanceOrig) || 0,
+      oldBalanceDest: formData.oldBalanceDest === '' ? 0 : parseFloat(formData.oldBalanceDest) || 0,
+      newBalanceDest: formData.newBalanceDest === '' ? 0 : parseFloat(formData.newBalanceDest) || 0
+    };
+    
     try {
-      // Convert string values to numbers for numeric fields
-      const processedFormData = {
-        ...formData,
-        amount: amount,
-        oldBalanceOrig: oldBalanceOrig,
-        newBalanceOrig: newBalanceOrig,
-        oldBalanceDest: oldBalanceDest,
-        newBalanceDest: newBalanceDest
-      };
-
       if (dialogMode === 'create') {
-        await createTransaction(processedFormData);
+        await createTransaction(processedData);
+        // 创建后重新加载列表
+        setTimeout(() => {
+          loadTransactions(true);
+        }, 100);
       } else if (dialogMode === 'edit' && selectedId) {
-        await updateTransaction(selectedId, processedFormData);
+        // 更新操作
+        const updatedTransaction = await updateTransaction(selectedId, processedData);
+        console.log('Updated transaction response:', updatedTransaction); // 调试信息
+        
+        // 直接更新本地状态中的对应记录
+        setTransactions(prevTransactions => 
+          prevTransactions.map(tx => 
+            tx.id === selectedId 
+              ? {
+                  ...tx,
+                  ...updatedTransaction, // 使用后端返回的完整数据
+                  updatedAt: updatedTransaction.updatedAt // 确保updatedAt字段被正确设置
+                }
+              : tx
+          )
+        );
       }
       setShowDialog(false);
-      loadTransactions();
     } catch (err) {
-      alert('Operation failed: ' + (err.message || 'Unknown error'));
+      // 显示详细的错误信息
+      let errorMessage = 'Operation failed';
+      if (err.message) {
+        errorMessage += ': ' + err.message;
+      }
+      if (err.details) {
+        errorMessage += ' - ' + err.details;
+      }
+      alert(errorMessage);
     }
   };
 
@@ -176,23 +201,49 @@ const Transaction = () => {
     if (!window.confirm('Are you sure you want to delete this transaction?')) return;
     try {
       await deleteTransaction(id);
-      loadTransactions();
+      // 直接从本地状态中移除被删除的记录
+      setTransactions(prevTransactions => 
+        prevTransactions.filter(tx => tx.id !== id)
+      );
+      // 更新总数
+      setTotal(prevTotal => prevTotal - 1);
     } catch (err) {
-      alert('Delete failed: ' + (err.message || 'Unknown error'));
+      // 显示详细的错误信息
+      let errorMessage = 'Delete failed';
+      if (err.message) {
+        errorMessage += ': ' + err.message;
+      }
+      if (err.details) {
+        errorMessage += ' - ' + err.details;
+      }
+      alert(errorMessage);
     }
   };
 
   const handleImport = async e => {
     e.preventDefault();
     if (!csvFile) return;
+    
     setImporting(true);
+    setImportError(null);
+    setImportSuccess(null);
+    
     try {
-      await importTransactions(csvFile);
+      const result = await importTransactions(csvFile);
       setCsvFile(null);
-      loadTransactions();
-      alert('Import successful');
+      loadTransactions(true);
+      
+      // 显示成功信息
+      const successMessage = result.count 
+        ? `Successfully imported ${result.count} transactions`
+        : 'Import successful';
+      setImportSuccess(successMessage);
+      
+      // 3秒后清除成功消息
+      setTimeout(() => setImportSuccess(null), 3000);
     } catch (err) {
-      alert('Import failed: ' + (err.message || 'Unknown error'));
+      // 显示详细错误信息
+      setImportError(err.message || 'Unknown error occurred');
     } finally {
       setImporting(false);
     }
@@ -210,18 +261,30 @@ const Transaction = () => {
     return new Date(dateString).toLocaleString();
   };
 
+  const formatUpdatedAt = (createdAt, updatedAt) => {
+    console.log('formatUpdatedAt called with:', { createdAt, updatedAt }); // 调试信息
+    
+    // 如果updatedAt不存在、为空或为零值，显示"Not modified"
+    if (!updatedAt || updatedAt === '' || updatedAt === '0001-01-01T00:00:00Z') {
+      console.log('UpdatedAt is empty or zero value, showing "Not modified"');
+      return 'Not modified';
+    }
+    
+    // 如果updatedAt与createdAt相同，说明记录没有被修改过
+    if (createdAt && updatedAt && new Date(createdAt).getTime() === new Date(updatedAt).getTime()) {
+      console.log('UpdatedAt equals CreatedAt, showing "Not modified"');
+      return 'Not modified';
+    }
+    
+    console.log('UpdatedAt is valid, showing formatted time');
+    return new Date(updatedAt).toLocaleString();
+  };
+
   const getFraudStatus = (transaction) => {
     if (transaction.isFraud) {
       return <span className="fraud-badge">Fraud Detected</span>;
     }
     return <span className="safe-badge">Safe</span>;
-  };
-
-  const getFraudProbability = (transaction) => {
-    if (transaction.fraudProbability !== undefined && transaction.fraudProbability !== null) {
-      return `${(transaction.fraudProbability * 100).toFixed(2)}%`;
-    }
-    return 'N/A';
   };
 
   return (
@@ -260,7 +323,6 @@ const Transaction = () => {
                 <th>Old Balance Dest</th>
                 <th>New Balance Dest</th>
                 <th>Is Fraud</th>
-                <th>Fraud Probability</th>
                 <th>Created At</th>
                 <th>Updated At</th>
                 <th>Actions</th>
@@ -283,9 +345,8 @@ const Transaction = () => {
                   <td>{formatAmount(tx.oldBalanceDest)}</td>
                   <td>{formatAmount(tx.newBalanceDest)}</td>
                   <td>{getFraudStatus(tx)}</td>
-                  <td>{getFraudProbability(tx)}</td>
                   <td>{formatDate(tx.createdAt)}</td>
-                  <td>{formatDate(tx.updatedAt)}</td>
+                  <td>{formatUpdatedAt(tx.createdAt, tx.updatedAt)}</td>
                   <td>
                     <button onClick={() => handleOpenDialog('edit', tx)}>Edit</button>
                     <button onClick={() => handleDelete(tx.id)}>Delete</button>
@@ -305,20 +366,52 @@ const Transaction = () => {
         <button disabled={page * size >= total} onClick={() => setPage(page + 1)}>Next</button>
       </div>
 
+      {/* Import Status Messages */}
+      {importError && (
+        <div className="import-error-message">
+          <strong>Import Error:</strong> {importError}
+          <button onClick={() => setImportError(null)}>×</button>
+        </div>
+      )}
+      
+      {importSuccess && (
+        <div className="import-success-message">
+          <strong>Success:</strong> {importSuccess}
+          <button onClick={() => setImportSuccess(null)}>×</button>
+        </div>
+      )}
+
       {/* Bottom Actions */}
       <div className="transaction-actions-bottom">
         <button onClick={() => handleOpenDialog('create')}>New Transaction</button>
         <form onSubmit={handleImport} className="import-form" style={{ display: 'inline-block' }}>
-          <label htmlFor="csv-upload-btn" className="import-csv-btn" style={{ cursor: 'pointer' }}>
+          <label htmlFor="csv-upload-btn" className={`import-csv-btn ${importing ? 'importing' : ''}`} style={{ cursor: importing ? 'not-allowed' : 'pointer' }}>
             {importing ? 'Importing...' : 'Import CSV'}
             <input
               id="csv-upload-btn"
               type="file"
               accept=".csv"
               style={{ display: 'none' }}
+              disabled={importing}
               onChange={e => {
-                setCsvFile(e.target.files[0]);
-                if (e.target.files[0]) {
+                if (importing) return; // 防止在导入过程中重复触发
+                
+                const file = e.target.files[0];
+                if (file) {
+                  // 验证文件类型
+                  if (!file.name.toLowerCase().endsWith('.csv')) {
+                    setImportError('Please select a valid CSV file');
+                    return;
+                  }
+                  
+                  // 验证文件大小 (限制为10MB)
+                  if (file.size > 10 * 1024 * 1024) {
+                    setImportError('File size must be less than 10MB');
+                    return;
+                  }
+                  
+                  setCsvFile(file);
+                  setImportError(null);
                   setTimeout(() => {
                     e.target.form.requestSubmit();
                   }, 0);

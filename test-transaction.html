@@ -324,23 +324,6 @@
                 newBalanceDest: parseFloat(document.getElementById('newBalanceDest').value)
             };
 
-            // Validate data before sending
-            if (!transactionData.type || !transactionData.nameOrig || !transactionData.nameDest) {
-                showResult('createResult', 'Please fill in all required fields', true);
-                return;
-            }
-
-            if (isNaN(transactionData.amount) || transactionData.amount <= 0) {
-                showResult('createResult', 'Please enter a valid amount', true);
-                return;
-            }
-
-            if (isNaN(transactionData.oldBalanceOrig) || isNaN(transactionData.newBalanceOrig) || 
-                isNaN(transactionData.oldBalanceDest) || isNaN(transactionData.newBalanceDest)) {
-                showResult('createResult', 'Please enter valid balance amounts', true);
-                return;
-            }
-
             showLoading('createResult');
 
             try {
@@ -514,4 +497,5 @@
         });
     </script>
 </body>
+</html> 
 </html> 

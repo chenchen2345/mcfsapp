@@ -8,13 +8,18 @@ export const loginUser = async (username, password) => {
   
   try {
     const response = await apiLogin(username, password);
+    
+    // 登录成功后，获取完整的用户信息
+    const userInfo = await getUserInfo();
+    
     const userData = { 
       username, 
       token: response.token,
-      ...response 
+      ...userInfo  // 包含用户ID和其他信息
     };
-  localStorage.setItem('user', JSON.stringify(userData));
-  return userData;
+    
+    localStorage.setItem('user', JSON.stringify(userData));
+    return userData;
   } catch (error) {
     throw error;
   }

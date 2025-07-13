@@ -1,12 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  createChatSession, 
-  getUserChatSessions, 
-  getChatSessionMessages, 
-  sendChatMessage,
-  updateChatSessionTitle,
-  deleteChatSession
-} from '../services/api';
+import { sendDirectChatMessage } from '../services/api';
 
 const ChatContext = createContext();
 
@@ -19,82 +12,53 @@ export const useChat = () => {
 };
 
 export const ChatProvider = ({ children }) => {
-  const [sessions, setSessions] = useState([]);
-  const [currentSession, setCurrentSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
   // 从localStorage获取用户信息
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    if (userData.id) {
-      setUser(userData);
-      loadUserSessions(userData.id);
+    try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('User data from localStorage:', userData);
+      
+      if (userData && userData.user_id) {
+        const userWithId = {
+          ...userData,
+          id: userData.user_id
+        };
+        setUser(userWithId);
+      } else if (userData && userData.token) {
+        console.log('User has token but no ID, attempting to refresh user info...');
+        refreshUserInfo();
+      } else {
+        console.warn('No valid user data found in localStorage');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+      setUser(null);
     }
   }, []);
 
-  // 加载用户会话列表
-  const loadUserSessions = async (userId) => {
+  // 刷新用户信息的函数
+  const refreshUserInfo = async () => {
     try {
-      setLoading(true);
-      const response = await getUserChatSessions(userId);
-      setSessions(response.data || []);
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 创建新会话
-  const createSession = async (title = '新对话') => {
-    if (!user?.id) return null;
-    
-    try {
-      setLoading(true);
-      const response = await createChatSession({
-        user_id: user.id,
-        title: title
-      });
+      const { getUserInfo } = await import('../services/api');
+      const userInfo = await getUserInfo();
       
-      const newSession = response.data;
-      setSessions(prev => [newSession, ...prev]);
-      setCurrentSession(newSession);
-      setMessages([]);
-      return newSession;
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUserData = {
+        ...userData,
+        ...userInfo,
+        id: userInfo.user_id
+      };
+      
+      localStorage.setItem('user', JSON.stringify(updatedUserData));
+      setUser(updatedUserData);
     } catch (error) {
-      console.error('Failed to create session:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 选择会话
-  const selectSession = async (sessionId) => {
-    try {
-      setLoading(true);
-      const session = sessions.find(s => s.id === sessionId);
-      if (session) {
-        setCurrentSession(session);
-        await loadSessionMessages(sessionId);
-      }
-    } catch (error) {
-      console.error('Failed to select session:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 加载会话消息
-  const loadSessionMessages = async (sessionId) => {
-    try {
-      const response = await getChatSessionMessages(sessionId);
-      setMessages(response.data || []);
-    } catch (error) {
-      console.error('Failed to load messages:', error);
-      setMessages([]);
+      console.error('Failed to refresh user info:', error);
+      setUser(null);
     }
   };
 
@@ -102,24 +66,24 @@ export const ChatProvider = ({ children }) => {
   const sendMessage = async (content) => {
     if (!content.trim()) return;
 
+    // 检查用户是否登录
+    if (!user?.id) {
+      console.error('User not logged in or missing user ID');
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        role: 'assistant',
+        content: '请先登录后再使用聊天功能。',
+        created_at: new Date().toISOString()
+      }]);
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      let sessionToUse = currentSession;
-      
-      // 如果没有当前会话，创建一个新会话
-      if (!sessionToUse) {
-        const newSession = await createSession();
-        if (!newSession) {
-          throw new Error('Failed to create session');
-        }
-        sessionToUse = newSession;
-      }
       
       // 添加用户消息到本地状态
       const userMessage = {
         id: Date.now(),
-        session_id: sessionToUse.id,
         role: 'user',
         content: content,
         created_at: new Date().toISOString()
@@ -127,39 +91,55 @@ export const ChatProvider = ({ children }) => {
       
       setMessages(prev => [...prev, userMessage]);
 
-      // 发送消息到服务器
-      const response = await sendChatMessage(sessionToUse.id, {
-        session_id: sessionToUse.id,
-        content: content
-      });
-
-      // 添加AI回复到本地状态
-      const aiMessage = response.data;
-      setMessages(prev => [...prev, aiMessage]);
-
-      // 如果会话标题是默认的，尝试更新为新的标题
-      if (sessionToUse.title === '新对话' && aiMessage) {
-        // 重新加载会话列表以获取更新的标题
-        await loadUserSessions(user.id);
+      // 发送消息到LLM API
+      console.log('Sending message to LLM:', content);
+      const response = await sendDirectChatMessage(content);
+      
+      console.log('LLM response:', response);
+      
+      // 解析双层JSON结构
+      let thought = '';
+      let responseContent = '';
+      
+      try {
+        if (response.reply) {
+          // 解析reply字段中的JSON字符串
+          const parsedReply = JSON.parse(response.reply);
+          thought = parsedReply.thought || '';
+          responseContent = parsedReply.response || response.reply;
+        } else {
+          responseContent = '抱歉，我没有收到有效的回复。';
+        }
+      } catch (parseError) {
+        console.error('Failed to parse reply JSON:', parseError);
+        // 如果解析失败，直接使用原始回复
+        responseContent = response.reply || '抱歉，我没有收到有效的回复。';
       }
-
-      // 更新会话列表中的最后更新时间
-      setSessions(prev => 
-        prev.map(s => 
-          s.id === sessionToUse.id 
-            ? { ...s, updated_at: aiMessage.created_at }
-            : s
-        )
-      );
+      
+      // 创建AI消息对象
+      const aiMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: responseContent,
+        thought: thought, // 保存思考过程
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
 
     } catch (error) {
       console.error('Failed to send message:', error);
+      
       // 添加错误消息
+      let errorMessage = '发送消息失败，请稍后再试。';
+      if (error.message) {
+        errorMessage = `发送消息失败: ${error.message}`;
+      }
+      
       setMessages(prev => [...prev, {
         id: Date.now(),
-        session_id: currentSession?.id || 0,
         role: 'assistant',
-        content: '抱歉，发送消息失败，请稍后再试。',
+        content: errorMessage,
         created_at: new Date().toISOString()
       }]);
     } finally {
@@ -167,61 +147,17 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
-  // 更新会话标题
-  const updateSessionTitle = async (sessionId, title) => {
-    try {
-      await updateChatSessionTitle(sessionId, { title });
-      setSessions(prev => 
-        prev.map(s => 
-          s.id === sessionId 
-            ? { ...s, title }
-            : s
-        )
-      );
-      if (currentSession?.id === sessionId) {
-        setCurrentSession(prev => ({ ...prev, title }));
-      }
-    } catch (error) {
-      console.error('Failed to update session title:', error);
-      throw error;
-    }
-  };
-
-  // 删除会话
-  const removeSession = async (sessionId) => {
-    try {
-      await deleteChatSession(sessionId);
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      
-      if (currentSession?.id === sessionId) {
-        setCurrentSession(null);
-        setMessages([]);
-      }
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-      throw error;
-    }
-  };
-
-  // 清空当前会话
-  const clearCurrentSession = () => {
-    setCurrentSession(null);
+  // 清空消息历史
+  const clearMessages = () => {
     setMessages([]);
   };
 
   const value = {
-    sessions,
-    currentSession,
     messages,
     loading,
     user,
-    createSession,
-    selectSession,
     sendMessage,
-    updateSessionTitle,
-    removeSession,
-    clearCurrentSession,
-    loadUserSessions
+    clearMessages
   };
 
   return (

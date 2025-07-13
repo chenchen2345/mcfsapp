@@ -148,7 +148,28 @@ export const importTransactions = async (file) => {
     });
     return response.data;
   } catch (error) {
-    throw error.response ? error.response.data : error.message;
+    // 提取详细的错误信息
+    if (error.response && error.response.data) {
+      const errorData = error.response.data;
+      let errorMessage = 'Import failed';
+      
+      if (errorData.details) {
+        errorMessage += `: ${errorData.details}`;
+      } else if (errorData.message) {
+        errorMessage += `: ${errorData.message}`;
+      }
+      
+      // 如果有错误代码，也显示出来
+      if (errorData.code) {
+        errorMessage += ` (Code: ${errorData.code})`;
+      }
+      
+      throw new Error(errorMessage);
+    } else if (error.message) {
+      throw new Error(`Import failed: ${error.message}`);
+    } else {
+      throw new Error('Import failed: Unknown error occurred');
+    }
   }
 };
 
@@ -216,57 +237,35 @@ export const generateFraudReport = async (transactionId) => {
   }
 };
 
-// Chat APIs
-export const createChatSession = async (sessionData) => {
+// Direct Chat API with LLM
+export const sendDirectChatMessage = async (prompt, model = 'qwen-turbo') => {
   try {
-    const response = await api.post('/chat/sessions', sessionData);
+    console.log('Sending direct chat message:', { prompt, model }); // 调试信息
+    const response = await api.post('/chat', {
+      prompt: prompt,
+      model: model
+    });
+    console.log('Direct chat response:', response); // 调试信息
     return response.data;
   } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
-
-export const getUserChatSessions = async (userId) => {
-  try {
-    const response = await api.get(`/chat/sessions/user/${userId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
-
-export const getChatSessionMessages = async (sessionId) => {
-  try {
-    const response = await api.get(`/chat/sessions/${sessionId}/messages`);
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
-
-export const sendChatMessage = async (sessionId, messageData) => {
-  try {
-    const response = await api.post(`/chat/sessions/${sessionId}/messages`, messageData);
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
-
-export const updateChatSessionTitle = async (sessionId, titleData) => {
-  try {
-    const response = await api.put(`/chat/sessions/${sessionId}/title`, titleData);
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
-  }
-};
-
-export const deleteChatSession = async (sessionId) => {
-  try {
-    const response = await api.delete(`/chat/sessions/${sessionId}`);
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error.message;
+    console.error('Direct chat error:', error); // 调试信息
+    if (error.response && error.response.data) {
+      const errorData = error.response.data;
+      let errorMessage = '发送消息失败';
+      
+      if (errorData.details) {
+        errorMessage += `: ${errorData.details}`;
+      } else if (errorData.message) {
+        errorMessage += `: ${errorData.message}`;
+      }
+      
+      if (errorData.code) {
+        errorMessage += ` (错误代码: ${errorData.code})`;
+      }
+      
+      throw new Error(errorMessage);
+    } else {
+      throw new Error(`发送消息失败: ${error.message}`);
+    }
   }
 };
