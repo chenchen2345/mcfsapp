@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import TransactionManagement from './pages/TransactionManagement';
@@ -13,6 +14,7 @@ function AppRoutes() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/user-management" component={UserManagement} />
       <ProtectedRoute path="/transaction-management" component={TransactionManagement} />

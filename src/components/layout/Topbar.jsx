@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-// import './Topbar.css'; // Assuming you have a CSS file for styling
+import './Topbar.css';
 
 const Topbar = () => {
   const { user, logout } = useAuth();

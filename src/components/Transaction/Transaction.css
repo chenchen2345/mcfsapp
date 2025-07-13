@@ -1,0 +1,247 @@
+.transaction-container {
+  max-width: 1400px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 32px 24px 24px 24px;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.transaction-header h2 {
+  margin: 0;
+  color: #3f51b5;
+}
+.search-input {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 1rem;
+  outline: none;
+  min-width: 300px;
+}
+.transaction-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 18px;
+}
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fafbfc;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+.transaction-table th, .transaction-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+.transaction-table th {
+  background: #f5f5f5;
+  color: #333;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.fraud-row {
+  background: #fff3e0 !important;
+}
+.transaction-table tr:last-child td {
+  border-bottom: none;
+}
+.transaction-table button {
+  margin: 0 2px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background: #e3e3e3;
+  color: #333;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+.transaction-table button:hover {
+  background: #bdbdbd;
+}
+.transaction-type {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.transaction-type.cash_in {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+.transaction-type.cash_out {
+  background: #ffebee;
+  color: #c62828;
+}
+.transaction-type.transfer {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.transaction-type.payment {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+.amount-cell {
+  font-weight: 600;
+  color: #2e7d32;
+}
+.fraud-badge {
+  background: #ffebee;
+  color: #c62828;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.safe-badge {
+  background: #e8f5e8;
+  color: #2e7d32;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.report-available {
+  background: #e3f2fd !important;
+  color: #1565c0 !important;
+}
+.transaction-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 0 0;
+}
+.transaction-pagination button {
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.transaction-pagination button:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+.transaction-actions-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 32px;
+}
+.transaction-actions-bottom button,
+.transaction-actions-bottom .import-csv-btn {
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 160px;
+  max-width: 200px;
+  width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  text-align: center;
+}
+.transaction-actions-bottom button:hover,
+.transaction-actions-bottom .import-csv-btn:hover {
+  background: #283593;
+}
+.transaction-dialog-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.transaction-dialog {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 400px;
+  max-width: 95vw;
+  min-height: 120px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.transaction-dialog h3 {
+  margin-top: 0;
+  color: #3f51b5;
+  margin-bottom: 18px;
+}
+.transaction-dialog-form label {
+  display: block;
+  margin-bottom: 10px;
+  color: #333;
+}
+.transaction-dialog-form input[type="text"],
+.transaction-dialog-form input[type="number"],
+.transaction-dialog-form select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+.transaction-dialog-actions .equal-width-btn {
+  min-width: 100px;
+  flex: 1 1 0;
+  text-align: center;
+}
+.transaction-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+.transaction-dialog-actions button {
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.transaction-dialog-actions button:hover {
+  background: #283593;
+}
+.loading {
+  color: #3f51b5;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 24px 0;
+}
+.error {
+  color: #d32f2f;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 24px 0;
+} 

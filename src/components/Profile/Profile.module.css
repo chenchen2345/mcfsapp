@@ -1,0 +1,71 @@
+.profileRoot {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f6fa 0%, #e3e9f7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.profileGrid {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.avatarCard {
+  border-radius: 18px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 12px 0 rgba(80, 120, 200, 0.08);
+}
+
+.avatarCard:hover {
+  box-shadow: 0 4px 24px 0 rgba(80, 120, 200, 0.16);
+}
+
+.avatar {
+  width: 120px !important;
+  height: 120px !important;
+  box-shadow: 0 4px 16px 0 rgba(80, 120, 200, 0.18);
+  margin-bottom: 16px;
+  border: 3px solid #e3e9f7;
+}
+
+.infoCard {
+  border-radius: 18px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 12px 0 rgba(80, 120, 200, 0.08);
+}
+
+.infoCard:hover {
+  box-shadow: 0 4px 24px 0 rgba(80, 120, 200, 0.16);
+}
+
+.profileTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3a3a5a;
+  margin-bottom: 8px;
+}
+
+.profileSubtitle {
+  font-size: 1rem;
+  color: #6b6b8a;
+  margin-bottom: 4px;
+}
+
+.profileDivider {
+  margin: 16px 0;
+}
+
+.profileInfoItem {
+  margin-bottom: 18px;
+} 

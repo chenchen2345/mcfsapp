@@ -21,3 +21,13 @@ export const getChatHistory = async () => {
     throw error;
   }
 };
+
+export const generateFraudReport = async (transactionId) => {
+  const token = localStorage.getItem("token");
+  const res = await axios.post(
+    `/api/fraud-reports/generate/${transactionId}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};

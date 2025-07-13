@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
-import { loginUser, logoutUser } from '../services/auth';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { loginUser, logoutUser, isAuthenticated, getCurrentUser } from '../services/auth';
 
 const AuthContext = createContext();
 
@@ -7,17 +7,28 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    // 检查本地存储中是否有用户信息
+    if (isAuthenticated()) {
+      const userData = getCurrentUser();
+      setUser(userData);
+    }
+    setLoading(false);
+  }, []);
+
   const login = async (username, password) => {
-    // 这里直接设置用户为任意输入
-    const userData = { username, token: 'dummy-token' };
+    try {
+      const userData = await loginUser(username, password);
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    // 不抛出异常，始终成功
+      return userData;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
+    logoutUser();
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   return (

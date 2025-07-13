@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginForm = () => {
@@ -19,7 +19,7 @@ const LoginForm = () => {
       await login(username, password);
       history.push('/dashboard');
     } catch (err) {
-      setError('Invalid username or password');
+      setError(err.message || 'Invalid username or password');
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +50,11 @@ const LoginForm = () => {
       <button type="submit" disabled={isLoading}>
         {isLoading ? 'Signing in...' : 'Sign In'}
       </button>
+      <div className="form-footer">
+        <p>
+          Don't have an account? <Link to="/register">Register here</Link>
+        </p>
+      </div>
     </form>
   );
 };
