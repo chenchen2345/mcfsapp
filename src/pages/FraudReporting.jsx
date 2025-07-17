@@ -45,6 +45,22 @@ const FraudReporting = () => {
   const [fraudReportSize, setFraudReportSize] = useState(10);
   const [fraudReportTotal, setFraudReportTotal] = useState(0);
 
+  // Fraud Reports Tab 下方，添加新建按钮和弹窗相关状态
+  const [showCreateFraudDialog, setShowCreateFraudDialog] = useState(false);
+  const [newFraudTransactionId, setNewFraudTransactionId] = useState('');
+  const [creatingFraud, setCreatingFraud] = useState(false);
+  const [updateFraudId, setUpdateFraudId] = useState(null);
+  const [updatingFraud, setUpdatingFraud] = useState(false);
+  // Search for fraud report by ID or transaction ID
+  const [searchType, setSearchType] = useState('report'); // 'report' or 'transaction'
+  const [searchId, setSearchId] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchError, setSearchError] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // 新增每条 transaction 的生成报告 loading 状态
+  const [generatingReportId, setGeneratingReportId] = useState(null);
+
   useEffect(() => { 
     if (showFraudReports) {
       loadFraudReports();
@@ -167,25 +183,16 @@ const FraudReporting = () => {
       const report = await getFraudReportByTransaction(id);
       setFraudReport(report);
     } catch (err) {
-      setFraudReport({ error: err.message || '获取报告失败' });
+      // 如果未生成报告，提示用户先生成
+      setFraudReport({ error: '未找到报告，请先点击“Generate Report”生成。' });
     } finally {
       setReportLoading(false);
     }
   };
 
-  const handleGenerateReport = async id => {
-    setReportLoading(true);
-    setFraudReport(null);
-    try {
-      const report = await generateFraudReport(id);
-      setFraudReport(report);
-      alert('报告生成成功');
-    } catch (err) {
-      setFraudReport({ error: err.message || '生成报告失败' });
-    } finally {
-      setReportLoading(false);
-    }
-  };
+  // 移除 generateFraudReport 相关逻辑
+  // 删除 handleGenerateReport 方法
+  // 删除 transaction 列表中“Generate Report”按钮
 
   const handleShowFraudReport = async id => {
     setReportLoading(true);
@@ -220,6 +227,57 @@ const FraudReporting = () => {
       String(tx.id).includes(search)
     );
   });
+
+  // 更新 Fraud Report 逻辑
+  const handleUpdateFraudReport = async id => {
+    setUpdatingFraud(true);
+    try {
+      await updateFraudReport(id);
+      loadFraudReports();
+      alert('Fraud report updated successfully');
+    } catch (err) {
+      alert('Update failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUpdatingFraud(false);
+    }
+  };
+
+  // 生成报告功能
+  const handleGenerateReport = async (transactionId) => {
+    setGeneratingReportId(transactionId);
+    try {
+      await createFraudReport({ transaction_id: transactionId });
+      alert('Fraud report generated successfully');
+      // 可选：自动切换到 Fraud Reports Tab 并刷新
+      setShowFraudReports(true);
+      loadFraudReports();
+    } catch (err) {
+      alert('Generate failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setGeneratingReportId(null);
+    }
+  };
+
+  // Fraud report search handler
+  const handleFraudReportSearch = async (e) => {
+    e.preventDefault();
+    setSearchResult(null);
+    setSearchError('');
+    setSearchLoading(true);
+    try {
+      let result;
+      if (searchType === 'report') {
+        result = await getFraudReport(searchId);
+      } else {
+        result = await getFraudReportByTransaction(searchId);
+      }
+      setSearchResult(result);
+    } catch (err) {
+      setSearchError(err?.message || 'Not found or error occurred');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   return (
     <div className="fraud-reporting-container">
@@ -268,10 +326,10 @@ const FraudReporting = () => {
                     <td>{tx.nameDest}</td>
                     <td>{tx.createdAt ? new Date(tx.createdAt).toLocaleString() : ''}</td>
                     <td>
-                      <button onClick={() => handleOpenDialog('edit', tx)}>Edit</button>
-                      <button onClick={() => handleDelete(tx.id)}>Delete</button>
                       <button onClick={() => handleShowReport(tx.id)}>View Report</button>
-                      <button onClick={() => handleGenerateReport(tx.id)}>Generate Report</button>
+                      <button onClick={() => handleGenerateReport(tx.id)} disabled={generatingReportId === tx.id}>
+                        {generatingReportId === tx.id ? 'Generating...' : 'Generate Report'}
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -282,40 +340,73 @@ const FraudReporting = () => {
       ) : (
         // 欺诈报告列表
         <div className="fraud-table-wrapper">
+          {/* Redesigned search box for fraud reports */}
+          <form style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }} onSubmit={handleFraudReportSearch}>
+            <select value={searchType} onChange={e => setSearchType(e.target.value)} style={{ padding: '7px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: '1rem' }}>
+              <option value="report">By Report ID</option>
+              <option value="transaction">By Transaction ID</option>
+            </select>
+            <input
+              type="number"
+              min="1"
+              placeholder={searchType === 'report' ? 'Enter Report ID' : 'Enter Transaction ID'}
+              value={searchId}
+              onChange={e => setSearchId(e.target.value)}
+              style={{ padding: '7px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: '1rem', width: 180 }}
+              required
+            />
+            <button type="submit" style={{ padding: '8px 18px', borderRadius: 6, border: 'none', background: '#3f51b5', color: '#fff', fontSize: '1rem', cursor: 'pointer' }} disabled={searchLoading || !searchId}>
+              {searchLoading ? 'Searching...' : 'Search'}
+            </button>
+          </form>
+          {searchError && <div className="error" style={{ marginBottom: 12 }}>{searchError}</div>}
+          {searchResult && (
+            <div className="fraud-report-info" style={{ marginBottom: 16 }}>
+              <p><strong>Report ID:</strong> {searchResult.id}</p>
+              <p><strong>Transaction ID:</strong> {searchResult.transaction_id}</p>
+              <p><strong>Generated At:</strong> {searchResult.generated_at ? new Date(searchResult.generated_at).toLocaleString() : 'N/A'}</p>
+              <p><strong>Updated At:</strong> {searchResult.updated_at ? new Date(searchResult.updated_at).toLocaleString() : 'N/A'}</p>
+              <div className="fraud-report-content"><h4>Report Content:</h4><pre>{searchResult.report}</pre></div>
+            </div>
+          )}
           {fraudReportsLoading ? <div className="loading">Loading...</div> : fraudReportsError ? <div className="error">{fraudReportsError}</div> : (
-            <table className="fraud-table">
-              <thead>
-                <tr>
-                  <th>Report ID</th>
-                  <th>Transaction ID</th>
-                  <th>Report Content</th>
-                  <th>Generated At</th>
-                  <th>Updated At</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fraudReports.map(report => (
-                  <tr key={report.id}>
-                    <td>{report.id}</td>
-                    <td>{report.transaction_id}</td>
-                    <td>
-                      <div className="report-content-preview">
-                        {report.report && report.report.length > 100 
-                          ? report.report.substring(0, 100) + '...' 
-                          : report.report}
-                      </div>
-                    </td>
-                    <td>{report.generated_at ? new Date(report.generated_at).toLocaleString() : ''}</td>
-                    <td>{report.updated_at ? new Date(report.updated_at).toLocaleString() : ''}</td>
-                    <td>
-                      <button onClick={() => handleShowFraudReport(report.id)}>View</button>
-                      <button onClick={() => handleDeleteFraudReport(report.id)}>Delete</button>
-                    </td>
+            <>
+              <button style={{marginBottom: 10}} onClick={() => setShowCreateFraudDialog(true)}>New Fraud Report</button>
+              <table className="fraud-table">
+                <thead>
+                  <tr>
+                    <th>Report ID</th>
+                    <th>Transaction ID</th>
+                    <th>Report Content</th>
+                    <th>Generated At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {fraudReports.map(report => (
+                    <tr key={report.id}>
+                      <td>{report.id}</td>
+                      <td>{report.transaction_id}</td>
+                      <td>
+                        <div className="report-content-preview">
+                          {report.report && report.report.length > 100 
+                            ? report.report.substring(0, 100) + '...' 
+                            : report.report}
+                        </div>
+                      </td>
+                      <td>{report.generated_at ? new Date(report.generated_at).toLocaleString() : ''}</td>
+                      <td>{report.updated_at ? new Date(report.updated_at).toLocaleString() : ''}</td>
+                      <td>
+                        <button onClick={() => handleShowFraudReport(report.id)}>View</button>
+                        <button onClick={() => handleUpdateFraudReport(report.id)}>Update</button>
+                        <button onClick={() => handleDeleteFraudReport(report.id)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       )}
@@ -337,34 +428,12 @@ const FraudReporting = () => {
       </div>
       {/* Bottom Actions */}
       <div className="fraud-actions-bottom">
-        {!showFraudReports ? (
-          <>
-            <button onClick={() => handleOpenDialog('create')}>New Transaction</button>
-            <form onSubmit={handleImport} className="import-form" style={{ display: 'inline-block' }}>
-              <label htmlFor="csv-upload-btn" className="import-csv-btn" style={{ cursor: 'pointer' }}>
-                {importing ? 'Importing...' : 'Import CSV'}
-                <input
-                  id="csv-upload-btn"
-                  type="file"
-                  accept=".csv"
-                  style={{ display: 'none' }}
-                  onChange={e => {
-                    setCsvFile(e.target.files[0]);
-                    if (e.target.files[0]) {
-                      setTimeout(() => {
-                        e.target.form.requestSubmit();
-                      }, 0);
-                    }
-                  }}
-                />
-              </label>
-            </form>
-          </>
-        ) : (
+        {/* 不显示 New Transaction 和 Import CSV 按钮 */}
+        {showFraudReports ? (
           <div>
             <span>Fraud Reports Management</span>
           </div>
-        )}
+        ) : null}
       </div>
       {/* Create/Edit Dialog */}
       {showDialog && (
@@ -383,6 +452,37 @@ const FraudReporting = () => {
               <div className="fraud-dialog-actions">
                 <button type="submit" className="equal-width-btn">Save</button>
                 <button type="button" className="equal-width-btn" onClick={() => setShowDialog(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* 新建 Fraud Report 弹窗 */}
+      {showCreateFraudDialog && (
+        <div className="fraud-dialog-backdrop" onClick={() => setShowCreateFraudDialog(false)}>
+          <div className="fraud-dialog" onClick={e => e.stopPropagation()}>
+            <h3>New Fraud Report</h3>
+            <form onSubmit={async e => {
+              e.preventDefault();
+              setCreatingFraud(true);
+              try {
+                await createFraudReport({ transaction_id: Number(newFraudTransactionId) });
+                setShowCreateFraudDialog(false);
+                setNewFraudTransactionId('');
+                loadFraudReports();
+                alert('Fraud report created successfully');
+              } catch (err) {
+                alert('Create failed: ' + (err.message || 'Unknown error'));
+              } finally {
+                setCreatingFraud(false);
+              }
+            }} className="fraud-dialog-form">
+              <label>Transaction ID:
+                <input name="transaction_id" type="number" value={newFraudTransactionId} onChange={e => setNewFraudTransactionId(e.target.value)} required />
+              </label>
+              <div className="fraud-dialog-actions">
+                <button type="submit" className="equal-width-btn" disabled={creatingFraud}>{creatingFraud ? 'Creating...' : 'Create'}</button>
+                <button type="button" className="equal-width-btn" onClick={() => setShowCreateFraudDialog(false)}>Cancel</button>
               </div>
             </form>
           </div>
@@ -409,6 +509,9 @@ const FraudReporting = () => {
             )}
             <div className="fraud-dialog-actions">
               <button className="equal-width-btn" onClick={() => setFraudReport(null)}>Close</button>
+              {!fraudReport.error && (
+                <button className="equal-width-btn" onClick={() => handleUpdateFraudReport(fraudReport.id)} disabled={updatingFraud}>{updatingFraud ? 'Updating...' : 'Update'}</button>
+              )}
             </div>
           </div>
         </div>

@@ -3,16 +3,8 @@
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-}
-
-.chatbot-container.minimized {
-  width: 60px;
-  height: 60px;
-}
-
-.chatbot-container.expanded {
-  width: 300px;
-  height: 400px;
+  width: 350px;   /* 固定宽度 */
+  height: 500px;  /* 固定高度 */
 }
 
 .chatbot-button {

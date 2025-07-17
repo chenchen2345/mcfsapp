@@ -30,7 +30,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect if not already on login or register page
+      const path = window.location.pathname;
+      if (!['/login', '/register'].includes(path)) {
+        window.location.href = '/login';
+      }
+      // If on login/register, just reject so error modal can show
     }
     return Promise.reject(error);
   }

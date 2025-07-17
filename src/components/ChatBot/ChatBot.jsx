@@ -54,24 +54,30 @@ const ChatBot = () => {
   return (
     <Box 
       sx={{ 
-        height: '100vh',
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        p: 2,
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+        background: 'transparent',
+        p: 0,
+        m: 0,
         boxSizing: 'border-box'
       }}
     >
       <Card sx={{ 
-        width: '100%', 
-        maxWidth: 1000, 
-        height: '100%', 
-        display: 'flex', 
+        width: '100%',
+        maxWidth: 900,
+        height: 'calc(100vh - 80px)',
+        margin: '16px',
+        display: 'flex',
         flexDirection: 'column',
-        boxShadow: 6, 
+        boxShadow: 6,
         borderRadius: 3,
-        mx: 'auto'
+        overflow: 'hidden',
+        position: 'relative',
       }}>
-        {/* 聊天标题 */}
+        {/* Chat Title */}
         <Box sx={{ 
           p: 2, 
           borderBottom: '1px solid #eee',
@@ -84,7 +90,7 @@ const ChatBot = () => {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <SmartToyIcon />
-            <Typography variant="h6">AI 金融助手</Typography>
+            <Typography variant="h6">AI Financial Assistant</Typography>
           </Box>
           <Button 
             variant="outlined" 
@@ -92,41 +98,41 @@ const ChatBot = () => {
             onClick={clearMessages}
             sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
           >
-            清空对话
+            Clear Chat
           </Button>
         </Box>
 
-        {/* 未登录提示 */}
+        {/* Not logged in alert */}
         {!user && (
           <Alert severity="info" sx={{ m: 2, flexShrink: 0 }}>
-            请先登录后再使用聊天功能
+            Please log in to use the chat feature.
           </Alert>
         )}
 
-        {/* 消息记录区 */}
+        {/* Message area */}
         <Box
           sx={{
             flex: 1,
             overflowY: 'auto',
-            p: 3,
+            p: 2,
             background: '#f9f9f9',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
-            minHeight: 0 // 确保flex子元素可以收缩
+            minHeight: 0 // Ensure flex children can shrink
           }}
         >
           {messages.length === 0 && (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <SmartToyIcon sx={{ fontSize: 60, color: 'grey.400', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                欢迎使用AI金融助手
+                Welcome to the AI Financial Assistant
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                我可以帮你分析交易数据、识别欺诈风险、解释金融概念等
+                I can help you analyze transaction data, identify fraud risks, explain financial concepts, and more.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                直接输入消息即可开始对话
+                Just type a message to start chatting.
               </Typography>
             </Box>
           )}
@@ -151,7 +157,7 @@ const ChatBot = () => {
                   gap: 1
                 }}
               >
-                {/* 显示思考过程（如果有） */}
+                {/* Show thought process (if any) */}
                 {msg.role === 'assistant' && msg.thought && (
                   <Paper
                     sx={{
@@ -171,7 +177,7 @@ const ChatBot = () => {
                         mb: 0.5
                       }}
                     >
-                      思考过程:
+                      Thought Process:
                     </Typography>
                     <Typography 
                       variant="body2" 
@@ -187,7 +193,7 @@ const ChatBot = () => {
                   </Paper>
                 )}
                 
-                {/* 显示回复内容 */}
+                {/* Show reply content */}
                 <Box
                   sx={{
                     bgcolor: msg.role === 'user' ? 'primary.main' : 'white',
@@ -215,15 +221,15 @@ const ChatBot = () => {
                 <SmartToyIcon color="primary" />
               </Avatar>
               <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">助手正在输入…</Typography>
+              <Typography variant="body2" color="text.secondary">Assistant is typing…</Typography>
             </Box>
           )}
           <div ref={messagesEndRef} />
         </Box>
 
-        {/* 输入区 */}
+        {/* Input area */}
         <Box sx={{ 
-          p: 3, 
+          p: 2, 
           display: 'flex', 
           gap: 1, 
           alignItems: 'center', 
@@ -234,7 +240,7 @@ const ChatBot = () => {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder={user ? "请输入消息..." : "请先登录..."}
+            placeholder={user ? "Type your message..." : "Please log in..."}
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -245,8 +251,9 @@ const ChatBot = () => {
             variant="contained" 
             onClick={handleSendMessage} 
             disabled={loading || !inputValue.trim() || !user}
+            sx={{ minWidth: 64, whiteSpace: 'nowrap' }}
           >
-            发送
+            Send
           </Button>
         </Box>
       </Card>

@@ -8,16 +8,16 @@ export const loginUser = async (username, password) => {
   
   try {
     const response = await apiLogin(username, password);
-    
+    // 先存 token，保证后续请求能带上
+    localStorage.setItem('user', JSON.stringify({ username, token: response.token }));
     // 登录成功后，获取完整的用户信息
     const userInfo = await getUserInfo();
-    
     const userData = { 
       username, 
       token: response.token,
       ...userInfo  // 包含用户ID和其他信息
     };
-    
+    // 再次覆盖 user，存完整信息
     localStorage.setItem('user', JSON.stringify(userData));
     return userData;
   } catch (error) {

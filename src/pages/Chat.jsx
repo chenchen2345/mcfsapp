@@ -8,8 +8,8 @@ const Chat = () => (
       flex: 1,
       display: "flex",
       flexDirection: "column",
-      height: "calc(100vh - 64px)", // 假设顶栏高度64px
-      marginLeft: "240px", // 假设侧边栏宽度240px
+      height: "calc(100vh - 64px)", // Assume topbar height is 64px
+      marginLeft: "240px", // Assume sidebar width is 240px
       background: "#f5f6fa",
       padding: 2,
     }}

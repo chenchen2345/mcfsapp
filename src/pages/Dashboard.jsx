@@ -21,6 +21,8 @@ import ChatBot from '../components/ChatBot/ChatBot';
 import Profile from '../components/Profile/Profile';
 import Transaction from '../components/Transaction/Transaction';
 import FraudReporting from './FraudReporting';
+import Button from '../components/common/Button';
+import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 220;
 
@@ -38,6 +40,7 @@ const Dashboard = () => {
   const [isResizing, setIsResizing] = useState(false);
   // 修复：补回 activeView 的 useState 定义
   const [activeView, setActiveView] = useState('dashboard');
+  const { user } = useAuth();
 
   const handleViewChange = (view) => {
     setActiveView(view);
@@ -91,29 +94,42 @@ const Dashboard = () => {
       default:
         return (
           <Box mt={4}>
-            <Typography variant="h4" gutterBottom align="center">Welcome to the Dashboard!</Typography>
+            <Typography variant="h4" gutterBottom align="center">
+              {user
+                ? `Welcome, ${user.username}! We are delighted to have you using the MCFS Financial Management System. We hope you enjoy a brand new experience in financial management!`
+                : 'Welcome to the MCFS Financial Management System! We hope you enjoy a brand new experience in financial management!'}
+            </Typography>
             <Grid container spacing={3} justifyContent="center">
               <Grid item xs={12} md={4}>
-                <Card sx={{ boxShadow: 3 }}>
+                <Card sx={{ boxShadow: 3, minHeight: 220, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <CardContent>
-                    <Typography variant="h6">Display 1</Typography>
-                    <Typography color="text.secondary">Add your first display content</Typography>
+                    <Typography variant="h6">Profile</Typography>
+                    <Typography color="text.secondary">View and edit your personal information.</Typography>
+                    <Box mt={2} display="flex" justifyContent="center">
+                      <Button styleType="btn-large-blue" onClick={() => handleViewChange('manageUsers')}>Go to Profile</Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Card sx={{ boxShadow: 3 }}>
+                <Card sx={{ boxShadow: 3, minHeight: 220, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <CardContent>
-                    <Typography variant="h6">Display 2</Typography>
-                    <Typography color="text.secondary">Add your second display content</Typography>
+                    <Typography variant="h6">Transaction</Typography>
+                    <Typography color="text.secondary">Manage your transaction records.</Typography>
+                    <Box mt={2} display="flex" justifyContent="center">
+                      <Button styleType="btn-large-blue" onClick={() => handleViewChange('transactionManagement')}>Go to Transaction</Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Card sx={{ boxShadow: 3 }}>
+                <Card sx={{ boxShadow: 3, minHeight: 220, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <CardContent>
-                    <Typography variant="h6">Display 3</Typography>
-                    <Typography color="text.secondary">Add your third display content</Typography>
+                    <Typography variant="h6">Report</Typography>
+                    <Typography color="text.secondary">Manage fraud reports.</Typography>
+                    <Box mt={2} display="flex" justifyContent="center">
+                      <Button styleType="btn-large-blue" onClick={() => handleViewChange('fraudReporting')}>Go to Report</Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -128,7 +144,7 @@ const Dashboard = () => {
       <AppBar position="fixed" sx={{ zIndex: 1201, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
-            Financial System Dashboard
+            MCFS Dashboard
           </Typography>
         </Toolbar>
       </AppBar>
