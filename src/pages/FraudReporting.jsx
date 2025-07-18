@@ -21,7 +21,8 @@ const FraudReporting = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
+  // 删除本地搜索相关状态
+  // const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -219,14 +220,15 @@ const FraudReporting = () => {
   };
 
   // 搜索功能（本地过滤）
-  const filteredTransactions = transactions.filter(tx => {
-    if (!search) return true;
-    return (
-      tx.nameOrig?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.nameDest?.toLowerCase().includes(search.toLowerCase()) ||
-      String(tx.id).includes(search)
-    );
-  });
+  // 删除本地过滤逻辑
+  // const filteredTransactions = transactions.filter(tx => {
+  //   if (!search) return true;
+  //   return (
+  //     tx.nameOrig?.toLowerCase().includes(search.toLowerCase()) ||
+  //     tx.nameDest?.toLowerCase().includes(search.toLowerCase()) ||
+  //     String(tx.id).includes(search)
+  //   );
+  // });
 
   // 更新 Fraud Report 逻辑
   const handleUpdateFraudReport = async id => {
@@ -297,7 +299,7 @@ const FraudReporting = () => {
             Fraud Reports
           </button>
         </div>
-        <input className="search-input" placeholder="Search by account/name/ID" value={search} onChange={e => setSearch(e.target.value)} />
+        {/* 删除顶部的search-input搜索框 */}
       </div>
       
       {!showFraudReports ? (
@@ -317,7 +319,8 @@ const FraudReporting = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map(tx => (
+                {/* 直接遍历transactions，不再本地过滤 */}
+                {transactions.map(tx => (
                   <tr key={tx.id} className={tx.isFraud ? 'fraud-row' : ''}>
                     <td>{tx.id}</td>
                     <td>{tx.type}</td>
@@ -340,9 +343,31 @@ const FraudReporting = () => {
       ) : (
         // 欺诈报告列表
         <div className="fraud-table-wrapper">
-          {/* Redesigned search box for fraud reports */}
-          <form style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }} onSubmit={handleFraudReportSearch}>
-            <select value={searchType} onChange={e => setSearchType(e.target.value)} style={{ padding: '7px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: '1rem' }}>
+          {/* 搜索区域样式调整：居中、宽度加大、统一高度 */}
+          <form 
+            style={{ 
+              display: 'flex', 
+              gap: 16, 
+              alignItems: 'center', 
+              marginBottom: 24, 
+              justifyContent: 'center', 
+              width: '100%',
+            }} 
+            onSubmit={handleFraudReportSearch}
+          >
+            <select 
+              value={searchType} 
+              onChange={e => setSearchType(e.target.value)} 
+              style={{ 
+                padding: '10px 18px', 
+                borderRadius: 6, 
+                border: '1px solid #ccc', 
+                fontSize: '1.08rem', 
+                width: 180, 
+                height: 44, 
+                boxSizing: 'border-box',
+              }}
+            >
               <option value="report">By Report ID</option>
               <option value="transaction">By Transaction ID</option>
             </select>
@@ -352,12 +377,73 @@ const FraudReporting = () => {
               placeholder={searchType === 'report' ? 'Enter Report ID' : 'Enter Transaction ID'}
               value={searchId}
               onChange={e => setSearchId(e.target.value)}
-              style={{ padding: '7px 12px', borderRadius: 6, border: '1px solid #ccc', fontSize: '1rem', width: 180 }}
+              style={{ 
+                padding: '10px 18px', 
+                borderRadius: 6, 
+                border: '1px solid #ccc', 
+                fontSize: '1.08rem', 
+                width: 260, 
+                height: 44, 
+                boxSizing: 'border-box',
+              }}
               required
             />
-            <button type="submit" style={{ padding: '8px 18px', borderRadius: 6, border: 'none', background: '#3f51b5', color: '#fff', fontSize: '1rem', cursor: 'pointer' }} disabled={searchLoading || !searchId}>
+            <button 
+              type="submit" 
+              style={{ 
+                padding: '10px 22px', // 与输入框一致
+                borderRadius: 6, 
+                border: 'none', 
+                background: '#3f51b5', 
+                color: '#fff', 
+                fontSize: '1.08rem', 
+                cursor: 'pointer', 
+                height: 44, 
+                minWidth: 80, 
+                maxWidth: 120, 
+                width: 100, 
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                verticalAlign: 'middle',
+              }} 
+              disabled={searchLoading || !searchId}
+            >
               {searchLoading ? 'Searching...' : 'Search'}
             </button>
+            {/* 新增Clear按钮，仅在有输入或结果时显示 */}
+            {(!!searchId || !!searchResult || !!searchError) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchId('');
+                  setSearchResult(null);
+                  setSearchError('');
+                }}
+                style={{
+                  padding: '10px 22px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: '#bdbdbd',
+                  color: '#fff',
+                  fontSize: '1.08rem',
+                  cursor: 'pointer',
+                  height: 44,
+                  minWidth: 80,
+                  maxWidth: 120,
+                  width: 100,
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  verticalAlign: 'middle',
+                  marginLeft: 4,
+                }}
+              >
+                Clear
+              </button>
+            )}
           </form>
           {searchError && <div className="error" style={{ marginBottom: 12 }}>{searchError}</div>}
           {searchResult && (
@@ -371,7 +457,6 @@ const FraudReporting = () => {
           )}
           {fraudReportsLoading ? <div className="loading">Loading...</div> : fraudReportsError ? <div className="error">{fraudReportsError}</div> : (
             <>
-              <button style={{marginBottom: 10}} onClick={() => setShowCreateFraudDialog(true)}>New Fraud Report</button>
               <table className="fraud-table">
                 <thead>
                   <tr>
