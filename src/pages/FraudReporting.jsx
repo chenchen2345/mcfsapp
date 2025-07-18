@@ -147,17 +147,17 @@ const FraudReporting = () => {
       setShowDialog(false);
       loadTransactions();
     } catch (err) {
-      alert('操作失败: ' + (err.message || '未知错误'));
+      alert('Operation failed: ' + (err.message || 'Unknown error'));
     }
   };
 
   const handleDelete = async id => {
-    if (!window.confirm('确定要删除该交易吗？')) return;
+    if (!window.confirm('Are you sure you want to delete this transaction?')) return;
     try {
       await deleteTransaction(id);
       loadTransactions();
     } catch (err) {
-      alert('删除失败: ' + (err.message || '未知错误'));
+      alert('Delete failed: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -169,9 +169,9 @@ const FraudReporting = () => {
       await importTransactions(csvFile);
       setCsvFile(null);
       loadTransactions();
-      alert('导入成功');
+      alert('Import succeeded');
     } catch (err) {
-      alert('导入失败: ' + (err.message || '未知错误'));
+      alert('Import failed: ' + (err.message || 'Unknown error'));
     } finally {
       setImporting(false);
     }
@@ -184,8 +184,8 @@ const FraudReporting = () => {
       const report = await getFraudReportByTransaction(id);
       setFraudReport(report);
     } catch (err) {
-      // 如果未生成报告，提示用户先生成
-      setFraudReport({ error: '未找到报告，请先点击“Generate Report”生成。' });
+      // If not generated, prompt user to generate first
+      setFraudReport({ error: 'No report found. Please click "Generate Report" first.' });
     } finally {
       setReportLoading(false);
     }
@@ -202,20 +202,20 @@ const FraudReporting = () => {
       const report = await getFraudReport(id);
       setFraudReport(report);
     } catch (err) {
-      setFraudReport({ error: err.message || '获取报告失败' });
+      setFraudReport({ error: err.message || 'Failed to get report' });
     } finally {
       setReportLoading(false);
     }
   };
 
   const handleDeleteFraudReport = async id => {
-    if (!window.confirm('确定要删除该欺诈报告吗？')) return;
+    if (!window.confirm('Are you sure you want to delete this fraud report?')) return;
     try {
       await deleteFraudReport(id);
       loadFraudReports();
-      alert('删除成功');
+      alert('Delete succeeded');
     } catch (err) {
-      alert('删除失败: ' + (err.message || '未知错误'));
+      alert('Delete failed: ' + (err.message || 'Unknown error'));
     }
   };
 
